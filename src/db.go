@@ -25,41 +25,67 @@ func databaseConnect() {
 }
 
 func tableCreate(db *sql.DB) {
-	db.Exec("create table if not exists users (username text, password text)")
+	db.Exec("CREATE TABLE if not exists users ( Id INTEGER NOT NULL, Username text UNIQUE, Password text, IsOnline INTEGER, PRIMARY KEY(Id AUTOINCREMENT) )")
+	db.Exec("CREATE TABLE sqlite_sequence(name,seq)")
+	db.Exec("INSERT INTO sqlite_sequence VALUES(users,0)")
+
 }
 
 type User struct {
+	Id       int
 	Username string
-	Password string
+	IsOnline int
 }
 
-func GetUserList(username string, password string) []User {
-
+func Login(username string, password string) User {
+	user := User{}
 	var userList []User
 	userList = nil
-	fmt.Println(username)
-	fmt.Println(password)
-	stmt, err := db.Prepare("select * from users where username = ? and password = ?")
+	stmt, err := db.Prepare("select Id,IsOnline from users where Username = ? and Password = ?")
 	rows, err := stmt.Query(username, password)
 	if err == nil {
-		fmt.Println(rows.Columns())
 		for rows.Next() {
+			var id int
 			var username string
-			var password string
-			err = rows.Scan(&username, &password)
+			var isOnline int
+			err = rows.Scan(&id, &username, &isOnline)
 			if err == nil {
-				userList = append(userList, User{Username: username, Password: password})
+				userList = append(userList, User{Id: id, Username: username, IsOnline: isOnline})
 			} else {
 				fmt.Println(err)
+			}
+		}
+		rows.Close()
+		if len(userList) > 0 && userList[0].IsOnline != 1 {
+			stmt, err := db.Prepare("update users set IsOnline=1 where Username = ?")
+			checkError(err)
+			fmt.Println(username)
+			res, err := stmt.Exec(username)
+			checkError(err)
+			_, err = res.RowsAffected()
+			checkError(err)
+			if err == nil {
+				user = userList[0]
 			}
 		}
 	} else {
 		fmt.Println(err)
 	}
-	rows.Close()
-	return userList
+	return user
 }
-
+func Logout(id int) bool {
+	stmt, err := db.Prepare("update users set IsOnline=0 where Id = ?")
+	checkError(err)
+	fmt.Println(id)
+	res, err := stmt.Exec(id)
+	checkError(err)
+	_, err = res.RowsAffected()
+	checkError(err)
+	if err == nil {
+		return true
+	}
+	return false
+}
 func addDictionary(word, wordMean string) {
 
 	stmt, err := db.Prepare("INSERT INTO tblSozluk(kelime, kelimeAnlam) values (?,?)")
