@@ -26,8 +26,8 @@ func databaseConnect() {
 }
 
 func tableCreate(db *sql.DB) {
-	db.Exec("CREATE TABLE if not exists users ( Id INTEGER NOT NULL, Username text UNIQUE NOT NULL, Password text NOT NULL, IsOnline INTEGER NOT NULL, PRIMARY KEY(Id AUTOINCREMENT) )")
-	db.Exec("CREATE TABLE if not exists wallet ( UserId INTEGER NOT NULL, CardNo	TEXT NOT NULL, Balance	INTEGER NOT NULL, PIN	TEXT NOT NULL, PRIMARY KEY(CardNo), UNIQUE(UserId))")
+	db.Exec("CREATE TABLE if not exists users( Id INTEGER NOT NULL, Username text UNIQUE NOT NULL, Password text NOT NULL, IsOnline INTEGER NOT NULL, PRIMARY KEY(Id AUTOINCREMENT) )")
+	db.Exec("CREATE TABLE if not exists wallet( UserId INTEGER NOT NULL, CardNo	TEXT NOT NULL, Balance	INTEGER NOT NULL, PIN	TEXT NOT NULL, PRIMARY KEY(CardNo), UNIQUE(UserId))")
 }
 
 type User struct {
@@ -117,7 +117,7 @@ func Logout(id int) bool {
 	return false
 }
 func CreateUser(username string, password string) int64 {
-	stmt, err := db.Prepare("INSERT OR IGNORE  users(Username, Password, IsOnline) values (?,?,0)")
+	stmt, err := db.Prepare("INSERT OR IGNORE INTO users(Username, Password, IsOnline) values (?,?,0)")
 	checkError(err)
 	res, err := stmt.Exec(username, password)
 	checkError(err)
